@@ -1,0 +1,115 @@
+---
+title: "What could a P-value be?"
+author: "Alison L Gibbs"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+The goal of this exercise is a better understanding of what a P-value is.  What do we want to show?  It is a random variable with its own distribution.  It can be close to zero or close to one, depending on whether or not the null hypothesis is true.    It provides one source of information about the data.  But to fully understand it, it needs more context, and, like all statistics, an understanding that there is uncertainty associationed it.  
+```{r echo=F, warning=F, message=F}
+library(tidyverse)
+```
+
+# Exercise
+Learning outcomes: Explore the distribution of the P-value assuming the null hypothesis is true, and that it is not.
+
+
+## One sample test of mean
+
+### Null hypothesis is true
+
+```{r}
+mu <- 4
+sigma <- 2
+n <- 25
+nsim <- 10000
+null.p <- numeric(nsim)
+
+for (i in 1:nsim)
+{
+  datasim <- rnorm(n, mu, sigma) 
+  tt <- t.test(datasim, mu=4)
+  null.p[i] <- tt$p.value
+}
+
+hist(null.p) 
+sum(null.p < 0.05) / nsim # examine other values for properties of a uniform distribution
+```
+
+## One sample test of mean
+
+### Alternative hypothesis is true
+
+```{r}
+mu <- 5
+sigma <- 2
+n <- 25
+nsim <- 10000
+null.p <- numeric(nsim)
+
+for (i in 1:nsim)
+{
+  datasim <- rnorm(n, mu, sigma) 
+  tt <- t.test(datasim, mu=4)
+  null.p[i] <- tt$p.value
+}
+
+hist(null.p) 
+sum(null.p < 0.05) / nsim # examine other values for properties of a uniform distribution
+```
+
+## Two sample test of mean
+
+### Null hypothesis is true
+
+```{r}
+mu1 <- 4
+sigma1 <- 2
+mu2 <- 4
+sigma2 <- 2
+n1 <- 25
+n2 <- 25
+nsim <- 10000
+pvalues <- numeric(nsim)
+
+for (i in 1:nsim)
+{
+  x1 <- rnorm(n1, mu1, sigma1) 
+  x2 <- rnorm(n2, mu2, sigma2)
+  pvalues[i] <- t.test(x1, x2)$p.value
+}
+
+hist(pvalues)
+
+sum(pvalues < 0.05)/nsim
+
+ggplot() + 
+  geom_histogram(aes(pvalues), breaks=seq(0, 1, by = .1), 
+                 col="black", 
+                 fill="grey") + 
+  labs(title="P-values under the null hypothesis") +
+  labs(x="P-values", y="Count") + 
+  xlim(c(-.1,1.1)) + 
+  theme_minimal()
+```
+
+
+### Some things to explore:
+
+What happens if you:  
+
+* change the test to be one-sided?  
+* change the alternative value to be closer to / further from the null value?   
+* change the sample size?   
+* carry out a t-test but the data are not normally distributed?  
+* create a multiple testing situation: what is the distribution of the smallest p-value? 
+
+## A mathematical result
+
+### The probability integral transform
+
+If $X$ is a continuous random variable with a strictly increasing cumulative distriution function, $F_X$, and if $Y = F_X(X)$, then $Y$ has a uniform distribution on $[0, \, 1]$.
+
+* How is this relevant?

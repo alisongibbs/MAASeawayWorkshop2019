@@ -1,0 +1,64 @@
+---
+title: "Cancer Incidence in Ontario"
+author: "Alison L Gibbs"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r echo=F, message=F}
+library(tidyverse)
+library(readxl)
+```
+
+```{r echo=F}
+ontdata <- read_excel("OntarioBreastCancerByPHU.xlsx")
+ontdata
+```
+
+
+The data being considered are taken from the report [Ontario Cancer Statistics 2018](https://www.cancercareontario.ca/sites/ccocancercare/files/assets/ANI_32628719_OCS2018_AODA_Mar2019_V02.pdf), produced by Cancer Care Ontario.
+Breast cancer data is taken from Table 8.2 of this report.  Population data is extracted from Table TA.4.
+
+In 2013, the province of Ontario was divided into 36 public health units (PHU) through which health care services were administered.  (Since then, two PHUs have been combined, so there are currently 35 PHUs.)  For the 36 PHUs, the provided data file gives the population, male and female population, and number of cases of breast cancer.  It also includes the age-standardized incidence rate (ASIRs) which is a weighted average over age category of incidence, weighted by the percentage of the population in each age category.
+
+
+1. For female cases of breast cancer, calculate the crude incidence rate per 100,000 population for each PHU.  Which PHUs have the largest and smallest crude incidence rates?  How do these compare to the PHUs with the largest and smallest ASIRs?
+
+1.  Plot crude incidence rate and ASIR versus population.  What do you observe?
+
+1. According to Table 8.2, the following PHUs have ASIRs that are statistically significantly different from the Ontario rate: BrantCounty, NorthBayParrySound, Ottawa, Peel, Renfrew, and Sudbury.  What does it mean if a PHU's ASIR is statistically significantly different from the Ontario rate?  Is it surprising that this is true for these 6 PHUs?
+
+1. Do you think the fact that the 6 PHUs are statistically significantly different from Ontario is important?  Why or why not?
+
+1. Suppose there is no difference in crude incidence rates among PHUs.  What probability model(s) would be appropriate to use to simulate possible values of the crude incidence rate?  What would be the variance of these estimated incidence rates?  How is this variance reflected in the plots you constructed?
+
+1. If we were to examine a cancer that is more rare than breast cancer, how would your answers change?
+
+```{r echo=F}
+ontdata <- ontdata %>% mutate(crude_incidence = breast_count/female_population*100000)
+
+# sort by crude incidence rate
+ontdata %>% arrange(crude_incidence)
+
+# sort by female population
+ontdata %>% arrange(female_population)
+
+# sort by ASIR
+ontdata %>% arrange(breast_ASIR)
+
+# plots of rates versus population
+p <- ontdata %>% ggplot(aes(x = female_population, y = crude_incidence)) +
+  geom_point() +
+  labs(x = "Female population", y = "Incidence of breast cancer", title = "Incidence of breast cancer for each Ontario Public Health Unit") +
+  theme_minimal()
+# Crude incidence rate for Ontario
+ontrate <- ontdata %>% summarize(ontrate = sum(breast_count) / sum(female_population)) * 100000
+p + geom_hline(aes(yintercept = ontrate), ontrate, colour="red")
+
+ontdata %>% ggplot(aes(x = female_population, y = breast_ASIR)) +
+  geom_point() +
+  labs(x = "Female population", y = "Age-standardized incidence of breast cancer", title = "Age-standardized incidence of breast cancer for each Ontario Public Health Unit") +
+  theme_minimal()
+```
+

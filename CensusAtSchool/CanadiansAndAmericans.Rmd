@@ -1,0 +1,112 @@
+---
+title: "Canadian elementary school students and US elementary school students"
+author: "Alison L Gibbs"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+CensusAtSchool is an international project in which students in grades 4 through 12 complete a questionnaire about themselves.  Students can analyze the data about their class, and compare their class to results from previous students.  They can also obtain random samples of data from previous years.
+
+The analysis below is based on random samples from the 2017 data in the Canadian and US Census at School projects.  For each country, a sample of size 200 was taken from students in grades 4 through 8 who completed the questionnaire.  Only questions that were asked of students in both countries are considered.
+
+Samples of Canadian data can be obtained from [https://ssc-school-ecole.shinyapps.io/samplingEng/](https://ssc-school-ecole.shinyapps.io/samplingEng/)  
+Samples of American data can be obtained from
+[https://ww2.amstat.org/censusatschool/RandomSampleForm.cfm](https://ww2.amstat.org/censusatschool/RandomSampleForm.cfm)
+
+Note that the Canadian data has been cleaned, and the US data has not.  Some processing was needed to rationalize the data sets.
+
+```{r echo=F, warning=F, message=F}
+library(tidyverse)
+library(readxl)
+library(gmodels)
+```
+
+
+```{r echo=F}
+# some code to have categories in each country correspond and remove some (not all) impossible values in US data
+cadata <- read_excel("CensusAtSchool_SampleData_CA.xlsx")
+#summary(cadata)
+usdata <- read_excel("CensusAtSchool_SampleData_US.xlsx")
+#summary(usdata)
+usdata <- usdata %>% mutate(travel = ifelse(travel == "Bicycle", "Cycle", travel))
+usdata <- usdata %>% mutate(travel = ifelse(travel == "Rail (Train/Tram/Subway)", "Rail", travel))
+usdata <- usdata %>% mutate(favsubj = ifelse(favsubj == "Computers and technology", "Computers", favsubj))
+usdata <- usdata %>% mutate(favsubj = ifelse(favsubj == "Mathematics and statistics", "Math", favsubj))
+cadata <- cadata %>% mutate(favsubj = ifelse(favsubj == "French", "Languages", favsubj))
+usdata <- usdata %>% mutate(communication = ifelse(communication == "Telephone", "Telephone (landline)", communication))
+usdata <- usdata %>% mutate(communication = ifelse(communication == "Myspace, Facebook, other social networking sites, or blog", "Internet chat / social networking / blog", communication))
+usdata <- usdata %>% mutate(communication = ifelse(communication == "Internet chat or instant messaging", "Internet chat / social networking / blog", communication))
+cadata <- cadata %>% mutate(communication = ifelse(communication == "Internet chat or MSN", "Internet chat / social networking / blog", communication))
+cadata <- cadata %>% mutate(communication = ifelse(communication == "Myspace, Facebook, blogs", "Internet chat / social networking / blog", communication))
+cadata <- cadata %>% mutate(lookupto = ifelse(lookupto == "Sportsperson", "Sports person", lookupto))
+cadata <- cadata %>% mutate(physical_activity = ifelse(physical_activity == "Football/Soccer", "Soccer", physical_activity))
+cadata <- cadata %>% mutate(physical_activity = ifelse(physical_activity == "Other activities/sports", "Other", physical_activity))
+usdata <- usdata %>% mutate(physical_activity = ifelse(physical_activity == "Hockey (Ice)", "Ice Hockey", physical_activity))
+usdata <- usdata %>% mutate(age = ifelse(age > 13, 14, age))
+usdata <- usdata %>% mutate(languages = ifelse(languages %in% c(0,1.5), 1, languages))
+usdata <- usdata %>% mutate(importance_saving_energy = ifelse(importance_reducing_pollution > 1000, 1000, importance_reducing_pollution))
+usdata <- usdata %>% mutate(importance_recycling_rubbish = ifelse(importance_recycling_rubbish > 1000, 1000, importance_recycling_rubbish))
+usdata <- usdata %>% mutate(importance_conserving_water = ifelse(importance_conserving_water > 1000, 1000, importance_conserving_water))
+usdata <- usdata %>% mutate(importance_saving_energy = ifelse(importance_saving_energy > 1000, 1000, importance_saving_energy))
+usdata <- usdata %>% mutate(importance_internet_access = ifelse(importance_internet_access > 1000, 1000, importance_internet_access))
+```
+
+
+
+Note that the US data has outliers (impossible values) in the following variables: height, armspan, foot, memorygame, and reaction_time.  
+
+
+```{r echo=F}
+alldata <- rbind(cadata, usdata)
+```
+
+# How do Canadian and US students differ?
+
+### Number of languages spoken
+```{r}
+alldata %>% t.test(importance_reducing_pollution ~ country, data = .)
+```
+
+### Allergies
+
+```{r}
+CrossTable(alldata$allergies, alldata$country, chisq=TRUE)
+```
+
+### How students travel to school
+
+```{r}
+CrossTable(alldata$travel, alldata$country, chisq=TRUE)
+```
+
+### Preferred mode of communication with friends
+
+```{r}
+CrossTable(alldata$communication, alldata$country, chisq=TRUE)
+```
+
+### Role models
+
+```{r}
+CrossTable(alldata$lookupto, alldata$country, chisq=TRUE)
+```
+
+### Feelings on the importance of actions to protect the environment and technology access
+
+```{r}
+alldata %>% t.test(importance_reducing_pollution ~ country, data = .)
+alldata %>% t.test(importance_recycling_rubbish ~ country, data = .)
+alldata %>% t.test(importance_conserving_water ~ country, data = .)
+alldata %>% t.test(importance_saving_energy ~ country, data = .)
+alldata %>% t.test(importance_owning_computer ~ country, data = .)
+alldata %>% t.test(importance_internet_access ~ country, data = .)
+```
+
+## Discussion points
+
+1. How do American and Canadian students differ?  How are they the same?
+2. For which of these do you have concerns about the analysis that was carried out to compare American with Canadian students?  Why? 
+3. If every student took a different sample of data, what would you expect to see from this analysis?
+4. How might your findings differ if you were looking at samples of different sizes?
